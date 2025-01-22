@@ -1,0 +1,85 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+
+
+model User{
+  id Int  @default(autoincrement()) @id
+  firstName String 
+  lastName String?
+  age Int?
+  gender String?
+  address String?
+  phone Int?
+  email String @unique
+  password String
+  createdAt DateTime @default(now())
+
+  purchases   Purchase_Table[]
+}
+
+model Clothe_Details{
+  id Int  @default(autoincrement()) @id
+  clotheId Int
+  category Category @relation(fields: [clotheId], references: [id])
+  title String
+  price Float
+  size String
+  gender String
+  stock Int
+  colors Color[]  @relation("ClotheColors")
+  discription String
+  imageId Int
+  createdAt DateTime @default(now())
+
+  image Image[] @relation("imageName")
+  purchases Purchase_Table[]
+
+}
+model Image{
+  id Int @default(autoincrement()) @id
+  imageName String
+
+  clothesImage Clothe_Details[] @relation("imageName")
+}
+model Category {
+  id Int  @default(autoincrement()) @id
+  name String
+  clothes Clothe_Details[] 
+  purchases Purchase_Table[]
+}
+
+
+
+model Color{
+  id Int  @default(autoincrement()) @id
+  name String 
+  colorCode String?
+  clothes Clothe_Details[] @relation("ClotheColors")
+}
+
+
+model Purchase_Table{
+  id Int  @default(autoincrement()) @id
+  userId Int
+  categoryId Int
+  clotheId Int
+
+  user User @relation(fields: [userId], references: [id])
+  clothe Clothe_Details @relation(fields: [clotheId], references: [id])
+  category Category @relation(fields: [categoryId], references: [id])
+  date DateTime @default(now())
+}
