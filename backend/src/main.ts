@@ -216,12 +216,12 @@ app.post('/addClothes',async(req,res)=>{
     const UserInput = z.object({
         categoryId: z.number(),
         title:z.string().min(4),
+        price: z.number().positive(),
         size:z.string(),
         gender:z.string(),
-        stock:z.number().positive(),
         colors:z.string(),
         discription:z.string().min(10),
-        imageId:z.array(z.number()).nonempty({message:"can't be empty"})
+        imageUrl:z.array(z.string()).nonempty({message:"can't be empty"})
     })
 
     console.log(req.body)
@@ -234,7 +234,8 @@ app.post('/addClothes',async(req,res)=>{
         stock:req.body.stock,
         colors:req.body.colors,
         discription:req.body.discription,
-        imageId:req.body.imageId
+        imageUrl:req.body.imageUrl,
+        price: req.body.price
     })
 
     if(!isValid.success){
@@ -245,21 +246,46 @@ app.post('/addClothes',async(req,res)=>{
         title:errorMessage.fieldErrors.title,
         size:errorMessage.fieldErrors.size,
         gender:errorMessage.fieldErrors.gender,
-        stock:errorMessage.fieldErrors.stock,
         colors:errorMessage.fieldErrors.colors,
         discription:errorMessage.fieldErrors.discription,
-        imageId:errorMessage.fieldErrors.imageId
+        imageUrl:errorMessage.fieldErrors.imageUrl,
+        price: errorMessage.fieldErrors.price
         })
 
         return; 
         
     }
 
+    const {categoryId,price,title,size,gender,colors,discription,imageUrl} = req.body
+    const CategoryId = await client.category.findFirst({where:{id:categoryId}})
+    if(categoryId != CategoryId?.id){
+        res.status(404).json({
+            message:"couln't find the category"
+        })
+        return;
+    }
+    try{
+        await client.clothe_Details.create({
+            data:{
+                categoryId: categoryId,
+                price:price,
+                size:size,
+                gender:gender,
+                imageUrl:imageUrl,
+                title:title,
+                color:colors,
+                discription:discription
+            }
+        })
 
-
-    res.json({
-        message:"received"
-    })
+        res.status(200).json({
+            message:"success"
+        })
+    }catch(err){
+        res.status(500).json({
+            message:"internal server error"
+        })
+    }
 
 
 })
