@@ -1,7 +1,7 @@
 import  express  from "express";
-import z from 'zod'
+import z, { number, string } from 'zod'
 import { PrismaClient } from "@prisma/client";
-import bcrypt, { hash } from 'bcrypt'
+import bcrypt from 'bcrypt'
 
 const app = express()
 
@@ -224,7 +224,6 @@ app.post('/addClothes',async(req,res)=>{
         imageUrl:z.array(z.string()).nonempty({message:"can't be empty"})
     })
 
-    console.log(req.body)
 
     const isValid = UserInput.safeParse({
         categoryId:req.body.categoryId,
@@ -290,6 +289,72 @@ app.post('/addClothes',async(req,res)=>{
 
 })
 
+
+app.get('/allProduct',async(req,res)=>{
+    const allProcuct = await client.clothe_Details.findMany();
+    res.status(200).json({
+        data:allProcuct
+    })
+})
+
+const categoryObj:{[key: string]:number} = {
+    "Hoodie":1, 
+    "cap":2,
+    "t-shirts":3
+}
+
+// filters
+app.get('/product/filters/',async(req,res)=>{
+    const queryData:{size?:string,category?:string,Minprice?:string,Maxprice?:string,color?:string,gender?:string} = req.query
+    const cat = queryData.category ||''; 
+    // it may fail over here because categoryid should get a number  
+    const categoryid = categoryObj[cat];
+
+    try{
+        const response = await client.clothe_Details.findMany({where:{
+            AND: [
+                { size: queryData.size || undefined },
+                { categoryId: categoryid || undefined },
+                { price: { gte: queryData.Minprice ? parseFloat(queryData.Minprice) : undefined } },
+                { price: { lte: queryData.Maxprice ? parseFloat(queryData.Maxprice) : undefined } },
+                { color: queryData.color || undefined },
+                { gender: queryData.gender || undefined }
+            ]
+        }})
+
+        res.status(200).json({
+            data: response
+        })
+    }catch(err){
+        res.status(500).json({
+            message:"internal server error"
+        })
+    }
+})
+
+
+
+
+// catogory by product
+app.get('/product/:category',async(req,res)=>{
+
+
+    const {category} = req.params; 
+
+    const id = categoryObj[category];
+    try{
+        const products = await client.clothe_Details.findMany({where:{categoryId:id}})
+        res.status(200).json({
+            data: products
+        })
+    }catch(err){
+        res.status(500).json({
+            message:"internal server error"
+        })
+    }
+    
+
+})
 
 
 app.listen(3001,()=>{
