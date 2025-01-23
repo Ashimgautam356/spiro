@@ -1,8 +1,13 @@
 import React from 'react'
+import NavBar from '@/components/NavBar'
 
 const page = () => {
   return (
-    <div>page</div>
+    // overPages/maindiv
+    <div className=''>
+      {/* header */}
+      <NavBar></NavBar>
+    </div>
   )
 }
 
