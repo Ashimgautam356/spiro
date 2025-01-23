@@ -33,43 +33,33 @@ model User{
 
 model Clothe_Details{
   id Int  @default(autoincrement()) @id
-  clotheId Int
-  category Category @relation(fields: [clotheId], references: [id])
+  categoryId Int
   title String
   price Float
   size String
   gender String
-  stock Int
-  colors Color[]  @relation("ClotheColors")
+  color String
   discription String
-  imageId Int
+  imageUrl String[]
   createdAt DateTime @default(now())
 
-  image Image[] @relation("imageName")
+  category Category @relation(fields: [categoryId], references: [id])
   purchases Purchase_Table[]
 
 }
-model Image{
-  id Int @default(autoincrement()) @id
-  imageName String
 
-  clothesImage Clothe_Details[] @relation("imageName")
-}
+
 model Category {
   id Int  @default(autoincrement()) @id
   name String
+  imageUrl String[]
   clothes Clothe_Details[] 
   purchases Purchase_Table[]
 }
 
 
 
-model Color{
-  id Int  @default(autoincrement()) @id
-  name String 
-  colorCode String?
-  clothes Clothe_Details[] @relation("ClotheColors")
-}
+
 
 
 model Purchase_Table{

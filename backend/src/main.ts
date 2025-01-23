@@ -21,7 +21,7 @@ app.get('/',(req,res)=>{
 app.post('/signup',async(req,res)=>{
 
     const userSchema = z.object({
-        firstName: z.string().min(3,{message:"minimum length should be 3"}).max(20,{message:"maximum length is 20"}),
+        firstName: req.body.clotheId.min(3,{message:"minimum length should be 3"}).max(20,{message:"maximum length is 20"}),
         lastName: z.string().min(3,{message:"minimum length should be 3"}).max(20,{message:"maximum length is 20"}).optional(),
         email: z.string().email({message:"Invalid Email Formate"}),
         age: z.number({message:"enter number "}).min(16,{message:"should be 16"}).max(80).optional(),
@@ -146,6 +146,125 @@ app.post('/login',async(req,res)=>{
         })
     }
 })
+
+// add Clothes
+// clotheId :1 ,
+// title: black and white hoodie
+// price: 500,
+// size : xl, i have to put it in a array, 
+// gender: [male,femaile,all
+// stock: 10,
+// colors:[red,balck],
+//   discription : laf fljaslkfdjkas askdfjaslfsf  fjklasfjkas f fkafnlakfj
+//   imageId
+
+// first i have to check if the size,color,category of clothe is present or not. 
+
+
+app.post('/addCategory',async(req,res)=>{
+    const CategroyInput= z.object({
+        name:z.string().min(2).max(15),
+        imageId:z.string().array().nonempty()
+    })
+
+    const isValid = CategroyInput.safeParse({
+        name:req.body.name,
+        imageId: req.body.imageId
+    })
+
+    if(!isValid.success){
+        const errorMessage = isValid.error.formErrors; 
+        
+        res.status(403).json({
+
+        name:errorMessage.fieldErrors.name,
+        imageId:errorMessage.fieldErrors.imageId
+
+        })
+    }
+
+    const {name,imageId} = req.body
+    const isAlreadyPresent = await client.category.findFirst({where:{name:name}})
+    if(!isAlreadyPresent){
+        try{
+            await client.category.create({
+                data:{
+                    name:name,
+                    imageUrl:imageId
+                }
+            })
+
+            res.status(200).json({
+                message:"success"
+            })
+        }catch(err){
+            res.status(500).json({
+                message:"internal server error"
+            })
+        }
+    }else{
+        res.status(411).json({
+            message:"already present"
+        })
+    }
+
+})
+
+
+app.post('/addClothes',async(req,res)=>{
+
+    const UserInput = z.object({
+        categoryId: z.number(),
+        title:z.string().min(4),
+        size:z.string(),
+        gender:z.string(),
+        stock:z.number().positive(),
+        colors:z.string(),
+        discription:z.string().min(10),
+        imageId:z.array(z.number()).nonempty({message:"can't be empty"})
+    })
+
+    console.log(req.body)
+
+    const isValid = UserInput.safeParse({
+        categoryId:req.body.categoryId,
+        title:req.body.title,
+        size:req.body.size,
+        gender:req.body.gender,
+        stock:req.body.stock,
+        colors:req.body.colors,
+        discription:req.body.discription,
+        imageId:req.body.imageId
+    })
+
+    if(!isValid.success){
+        const errorMessage = isValid.error.formErrors; 
+        res.status(403).json({
+
+        categoryId:errorMessage.fieldErrors.categoryId,
+        title:errorMessage.fieldErrors.title,
+        size:errorMessage.fieldErrors.size,
+        gender:errorMessage.fieldErrors.gender,
+        stock:errorMessage.fieldErrors.stock,
+        colors:errorMessage.fieldErrors.colors,
+        discription:errorMessage.fieldErrors.discription,
+        imageId:errorMessage.fieldErrors.imageId
+        })
+
+        return; 
+        
+    }
+
+
+
+    res.json({
+        message:"received"
+    })
+
+
+})
+
+
 
 app.listen(3001,()=>{
     console.log("app is running")
